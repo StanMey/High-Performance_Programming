@@ -1,4 +1,4 @@
-/* ompArraySum.c uses an array to sum the values in an input file,
+/* ompArraySum.c uses an array to sum the values in parallel in an input file,
  *  whose name is specified on the command-line.
  * Stan Meyberg, HU, HPP, 2020
  * Based on the source code by:
@@ -82,7 +82,7 @@ void readArray(char * fileName, double ** a, int * n) {
   *a = tempA;
 }
 
-/* sumArray sums the values in an array of doubles.
+/* sumArray sums the values in an array of doubles in parallel.
  * Receive: a, a pointer to the head of an array;
  *          numValues, the number of values in the array.
  * Return: the sum of the values in the array.
