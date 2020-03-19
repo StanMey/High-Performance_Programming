@@ -1,0 +1,7 @@
+Method,Number of Processes,Time,elements
+Sequential,1,27.56,100000000
+Parallel (MPI),1,92.76,100000000
+Parallel (MPI),2,49.42,100000000
+Parallel (MPI),4,36.93,100000000
+Parallel (MPI),8,40.9,100000000
+Parallel (MPI),16,54.58,100000000
