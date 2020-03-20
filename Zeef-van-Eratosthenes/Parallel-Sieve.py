@@ -25,16 +25,14 @@ if rank == 0:
     # get the amount of threads and N from the cmd
     N = int(sys.argv[1])
 
-    # calculate all the ranges for which the algorithm still has to search for
-    # primes
+    # Calculate the chunk size every process gets to balance the workload
+    # over all processes
     ranges = list()
     n1 = 0
     delta = int(np.ceil(N / size))
 
-
     # get the ranges of the arrays to select
     for i in range(size):
-        # correct for the exclusive range by adding 1 to n2
         n2 = min(n1 + delta, N)
         ranges.append((n1, n2))
         n1 = n2
@@ -45,7 +43,7 @@ if rank == 0:
     for x in range(1, size):
         comm.send(("init", ranges[x]), dest=x)
 
-
+    # Let the master build its own local Sieve for finding the primes
     master_range = ranges[0]
     local_sieve = [True for i in range(master_range[0], master_range[1])]
     p = 2
@@ -54,13 +52,15 @@ if rank == 0:
 
         # check if the current number is prime
         if local_sieve[p]:
+            # send the prime number the master has found to all the other processes
+            # so they can filter out the multiples of this prime number
             for x in range(1, size):
                 comm.send(("filter", p), dest=x)
 
             # Update all multiples of p in own sieve
             for i in range(p * 2, len(local_sieve), p):
                 local_sieve[i] = False
-
+        # update p
         p += 1
 
 
@@ -73,28 +73,36 @@ if rank == 0:
     local_sieve[0] = False
     local_sieve[1] = False
 
-    #
+    # Set all the True/False values back to their initial values for returning
     for k in range(len(local_sieve)):
         if local_sieve[k]:
             global_sieve.append(k)
 
-    # collect all the other sieves
+    # collect all the other sieves and concatenate them into 'global_sieve'
     for x in range(1, size):
         global_sieve += comm.recv(source=x)
 
-    print(global_sieve)
-    # print the time
     end_time = time.time()
+
+    # print all the info
+    # print(global_sieve)
     print("The function took {0} seconds".format(end_time - start_time))
 
 
 else:
-    # print("Thread {0} of {1} is waiting".format(rank, size))
+    # the process is a worker process
 
     while True:
+        # every process waits for the master to send them a new prime so that
+        # every process can filter all the multiples out of their own
+        # 'local_sieve'
         data = comm.recv(source=0)
 
         if data[0] == "filter":
+            # When a process gets the filter command the process will filter
+            # out all the multiples of the given prime out of their own
+            # 'local_sieve', after which it will restart listening for a new
+            # command from the master process
             index = 0
             p = data[1]
             for x in local_sieve:
@@ -106,17 +114,21 @@ else:
                     index += 1
 
         elif data[0] == "init":
+            # let the process initialise their 'local_sieve' with True values
             print("Thread {0} is initialising".format(rank))
             n_begin = data[1][0]
             n_end = data[1][1]
             local_sieve = [True for i in range(n_begin, n_end + 1)]
 
         else:
+            # the master has no more primes to pass on so every process now
+            # collects all their own calculated prime numbers in a list
             local_primes = list()
             for x in range(len(local_sieve)):
                 if local_sieve[x]:
                     local_primes.append(x + n_begin)
 
-            # send
+            # The list is send back to the master process and the while True
+            # loop is escaped so that all other processes can stop.
             comm.send(local_primes, dest=0)
             break
