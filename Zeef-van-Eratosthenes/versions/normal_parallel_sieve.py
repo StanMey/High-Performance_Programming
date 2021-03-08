@@ -10,9 +10,6 @@ comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
 
-local_sieve = list()
-n_begin, n_end = 0, 0
-
 # use the master-worker pattern to distribute the workload
 if rank == 0:
 
@@ -110,7 +107,7 @@ else:
 
         elif data[0] == "init":
             # let the process initialise their 'local_sieve' with True values
-            print("Thread {0} is initialising".format(rank))
+            # print("Thread {0} is initialising".format(rank))
             n_begin = data[1][0]
             n_end = data[1][1]
             local_sieve = [True for i in range(n_begin, n_end + 1)]

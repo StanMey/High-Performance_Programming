@@ -10,9 +10,6 @@ comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
 
-local_sieve = list()
-n_begin, n_end = 0, 0
-
 # use the master-worker pattern to distribute the workload
 if rank == 0:
 
@@ -76,11 +73,9 @@ if rank == 0:
     for x in range(1, size):
         prime_count += comm.recv(source=x)
 
-    end_time = time.time()
-
     # print all the info
     # print(global_sieve)
-    print("Primes: {0}\nThe function took {1} seconds".format(prime_count, end_time - start_time))
+    print("Primes: {0}\nThe function took {1} seconds".format(prime_count, time.time() - start_time))
 
 
 else:
@@ -108,7 +103,7 @@ else:
 
         elif data[0] == "init":
             # let the process initialise their 'local_sieve' with True values
-            print("Thread {0} is initialising".format(rank))
+            # print("Thread {0} is initialising".format(rank))
             n_begin = data[1][0]
             n_end = data[1][1]
             local_sieve = np.ones((n_end - n_begin), dtype=np.int8)

@@ -3,13 +3,13 @@ import time
 import sys
 import math
 
-import pymp as omp
 from mpi4py import MPI
 
 # set all mpi related variables
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
+print(size, rank)
 
 local_sieve = list()
 global_sieve = list()
