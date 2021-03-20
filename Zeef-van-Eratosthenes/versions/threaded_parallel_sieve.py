@@ -4,11 +4,16 @@ import sys
 import math
 
 from mpi4py import MPI
+from concurrent.futures import ThreadPoolExecutor
 
 # set all mpi related variables
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
+threads = 4
+
+def f(x):
+    local_sieve[x] = 0
 
 # use the master-worker pattern to distribute the workload
 if rank == 0:
@@ -52,7 +57,8 @@ if rank == 0:
                 comm.send(("filter", p), dest=x)
 
             # Update all multiples of p in own sieve
-            local_sieve[p*2:len(local_sieve):p] = 0
+            with ThreadPoolExecutor(max_workers=threads) as executor:
+                executor.map(f, range(p * 2, len(local_sieve), p))
         # update p
         p += 1
 
@@ -72,9 +78,11 @@ if rank == 0:
     for x in range(1, size):
         prime_count += comm.recv(source=x)
 
+    end_time = time.time()
+
     # print all the info
     # print(global_sieve)
-    print("Primes: {0}\nThe function took {1} seconds".format(prime_count, time.time() - start_time))
+    print("Primes: {0}\nThe function took {1} seconds".format(prime_count, end_time - start_time))
 
 
 else:
@@ -95,7 +103,8 @@ else:
             p = data[1]
             for _ in local_sieve:
                 if (n_begin + index) % p == 0:
-                    local_sieve[index:local_sieve.size:p] = 0
+                    with ThreadPoolExecutor(max_workers=threads) as executor:
+                        executor.map(f, range(index, len(local_sieve), p))
                     break
                 else:
                     index += 1
