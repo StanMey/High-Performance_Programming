@@ -13,6 +13,11 @@ mpirun.mpich -n 4 python3 ./versions/vec_parallel_sieve.py $1
 
 echo
 
+echo "Threaded python parallel sieve"
+mpirun.mpich -n 4 python3 ./versions/threaded_parallel_sieve.py $1
+
+echo
+
 echo "Sequential python sieve (van casper)"
 python3 ./versions/casper_sieve.py $1
 
